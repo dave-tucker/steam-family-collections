@@ -18,6 +18,7 @@ from tui.modals import (
     ConfirmModal,
     DisambiguationModal,
     EditPegiModal,
+    SetMobyIdModal,
 )
 
 
@@ -37,18 +38,19 @@ class LibraryScreen(Screen):
         Binding("e", "edit_rating", "Edit Rating", show=True),
         Binding("m", "moby_lookup", "MobyGames", show=True),
         Binding("a", "add_to_child", "Add to Child", show=True),
+        Binding("f", "cycle_filter", "Filter", show=True),
+        Binding("i", "set_moby_id", "Set Moby ID", show=True),
     ]
+
+    _FILTER_ORDER = ["all", "unrated", "ambiguous"]
 
     def __init__(self) -> None:
         super().__init__()
-        # Queue of appids waiting for MobyGames title search / disambiguation
         self._search_queue: deque[str] = deque()
-        # Appids that have a moby_id and are waiting for per-platform ratings fetch
         self._ratings_queue: list[str] = []
-        # Appid currently being processed (to avoid double-queuing)
         self._current_appid: str | None = None
-        # True while the queue is actively running
         self._queue_active = False
+        self._filter: str = "all"
 
     # ------------------------------------------------------------------ table
 
@@ -79,27 +81,49 @@ class LibraryScreen(Screen):
         table.add_column("Source", width=10)
         table.add_column("Flag", width=10)
 
+    def _matches_filter(self, game: dict) -> bool:
+        if self._filter == "all":
+            return True
+        has_moby = bool(game.get("moby_id"))
+        flag = game.get("pegi_flag") or ""
+        if self._filter == "unrated":
+            return game.get("pegi_rating") is None
+        if self._filter == "ambiguous":
+            return flag == "ambiguous" and not has_moby
+        return True
+
     def _reload_rows(self) -> None:
         table = self.query_one(DataTable)
 
         selected_key: str | None = None
+        prev_cursor_row: int = 0
         if table.row_count > 0:
             keys = list(table.rows.keys())
             idx = table.cursor_row
+            prev_cursor_row = idx
             if 0 <= idx < len(keys):
                 selected_key = str(keys[idx].value)
 
         table.clear()
         games = database.load_games()
-        for appid, game in sorted(games.items(), key=lambda x: x[1]["title"].lower()):
+        visible = {k: v for k, v in games.items() if self._matches_filter(v)}
+        for appid, game in sorted(visible.items(), key=lambda x: x[1]["title"].lower()):
+            has_moby = bool(game.get("moby_id"))
+            flag = game.get("pegi_flag") or ""
+            if has_moby and flag == "ambiguous":
+                flag = ""
             table.add_row(
                 game["title"],
                 str(game["appid"]),
                 str(game.get("moby_id") or ""),
                 str(game.get("pegi_rating") or ""),
                 game.get("pegi_source") or "",
-                game.get("pegi_flag") or "",
+                flag,
                 key=appid,
+            )
+        if self._filter != "all" and not self._queue_active:
+            self.set_status(
+                f"Filter: {self._filter} — {len(visible)}/{len(games)} games shown"
             )
 
         if selected_key is not None and selected_key in {str(k.value) for k in table.rows}:
@@ -107,6 +131,8 @@ class LibraryScreen(Screen):
                 i for i, k in enumerate(table.rows.keys()) if str(k.value) == selected_key
             )
             table.move_cursor(row=target)
+        elif table.row_count > 0:
+            table.move_cursor(row=min(prev_cursor_row, table.row_count - 1))
 
     def _selected_appid(self) -> str | None:
         table = self.query_one(DataTable)
@@ -120,6 +146,13 @@ class LibraryScreen(Screen):
 
     def set_status(self, msg: str) -> None:
         self.query_one("#status", Label).update(msg)
+
+    def action_cycle_filter(self) -> None:
+        idx = self._FILTER_ORDER.index(self._filter)
+        self._filter = self._FILTER_ORDER[(idx + 1) % len(self._FILTER_ORDER)]
+        self._reload_rows()
+        if self._filter == "all":
+            self.set_status("Filter cleared — showing all games")
 
     # ------------------------------------------------------------------ queue
 
@@ -191,6 +224,8 @@ class LibraryScreen(Screen):
         """Store moby_id and queue ratings fetch. Main thread."""
         games = database.load_games()
         games[appid]["moby_id"] = moby_id
+        if games[appid].get("pegi_flag") == "ambiguous":
+            games[appid]["pegi_flag"] = None
         database.save_games(games)
         self._ratings_queue.append(appid)
         self._reload_rows()
@@ -254,7 +289,6 @@ class LibraryScreen(Screen):
         """Called on main thread when ratings fetch batch completes."""
         self._reload_rows()
         self.set_status(f"Ratings done — {rated}/{total} games rated via MobyGames")
-        # Advance again: picks up any searches queued while ratings were running
         self._queue_active = False
         if self._search_queue or self._ratings_queue:
             self._advance_queue()
@@ -307,7 +341,6 @@ class LibraryScreen(Screen):
         appid = self._selected_appid()
         if not appid:
             return
-        # Clear existing enrichment so the force re-lookup can overwrite it
         games = database.load_games()
         game = games.get(appid)
         if game:
@@ -318,6 +351,32 @@ class LibraryScreen(Screen):
             database.save_games(games)
             self._reload_rows()
         self.enqueue_moby_search([appid])
+
+    # ------------------------------------------------------------------ i key (set moby ID)
+
+    def action_set_moby_id(self) -> None:
+        appid = self._selected_appid()
+        if not appid:
+            return
+        games = database.load_games()
+        game = games.get(appid)
+        if not game:
+            return
+
+        def on_result(moby_id: int | None) -> None:
+            if moby_id is None:
+                return
+            game["moby_id"] = moby_id
+            if game.get("pegi_flag") == "ambiguous":
+                game["pegi_flag"] = None
+            database.save_games(games)
+            self._reload_rows()
+            self.set_status(f"Set Moby ID {moby_id} for '{game['title']}' — queuing ratings fetch")
+            self._ratings_queue.append(appid)
+            if not self._queue_active:
+                self._advance_queue()
+
+        self.app.push_screen(SetMobyIdModal(game), on_result)
 
     # ------------------------------------------------------------------ add to child
 

@@ -354,6 +354,53 @@ PushWarningModal { align: center middle; }
             self.dismiss(False)
 
 
+class SetMobyIdModal(ModalScreen):
+    DEFAULT_CSS = (
+        _SHARED_CSS
+        + """
+SetMobyIdModal { align: center middle; }
+"""
+    )
+
+    def __init__(self, game: dict) -> None:
+        super().__init__()
+        self._game = game
+
+    def compose(self) -> ComposeResult:
+        current = str(self._game.get("moby_id") or "")
+        with Vertical(classes="dialog"):
+            yield Label(f"Set MobyGames ID — {self._game['title']}", classes="dialog-title")
+            yield Input(value=current, placeholder="e.g. 1234", id="moby-input")
+            yield Label("", id="error-label")
+            with Horizontal(classes="dialog-buttons"):
+                yield Button("Save", variant="success", id="save")
+                yield Button("Cancel", variant="primary", id="cancel")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "cancel":
+            self.dismiss(None)
+            return
+        self._try_save()
+
+    def on_input_submitted(self, _event: Input.Submitted) -> None:
+        self._try_save()
+
+    def _try_save(self) -> None:
+        raw = self.query_one("#moby-input", Input).value.strip()
+        try:
+            val = int(raw)
+            if val <= 0:
+                raise ValueError
+        except ValueError:
+            self.query_one("#error-label", Label).update("Must be a positive integer")
+            return
+        self.dismiss(val)
+
+    def on_key(self, event) -> None:
+        if event.key == "escape":
+            self.dismiss(None)
+
+
 class AddGameModal(ModalScreen):
     DEFAULT_CSS = (
         _SHARED_CSS

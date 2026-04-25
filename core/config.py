@@ -72,6 +72,7 @@ def get_user_id(config: dict) -> str:
     if len(dirs) > 1:
         names = ", ".join(d.name for d in sorted(dirs))
         raise ConfigError(
-            f"Multiple Steam user directories found: {names}\nSet [steam] user_id in {CONFIG_PATH}"
+            f"Multiple Steam user directories found: {names}\n"
+            f"Set [steam] user_id in {_USER_CONFIG_PATH}"
         )
     return dirs[0].name
