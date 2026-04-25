@@ -29,8 +29,7 @@ def load_config() -> dict:
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
         CONFIG_PATH.write_text(_EXAMPLE)
         raise ConfigError(
-            f"Config file created at {CONFIG_PATH}\n"
-            "Fill in your API keys and run again."
+            f"Config file created at {CONFIG_PATH}\nFill in your API keys and run again."
         )
 
     with open(CONFIG_PATH, "rb") as f:
@@ -43,9 +42,7 @@ def load_config() -> dict:
     ]:
         val = config.get(section, {}).get(key, "")
         if not val or str(val).startswith(_PLACEHOLDER_PREFIX):
-            raise ConfigError(
-                f"Missing or unconfigured: [{section}] {key} in {CONFIG_PATH}"
-            )
+            raise ConfigError(f"Missing or unconfigured: [{section}] {key} in {CONFIG_PATH}")
 
     return config
 
@@ -57,19 +54,14 @@ def get_user_id(config: dict) -> str:
 
     userdata = Path.home() / ".local" / "share" / "Steam" / "userdata"
     if not userdata.exists():
-        raise ConfigError(
-            "Steam userdata directory not found: ~/.local/share/Steam/userdata/"
-        )
+        raise ConfigError("Steam userdata directory not found: ~/.local/share/Steam/userdata/")
 
     dirs = [d for d in userdata.iterdir() if d.is_dir() and d.name.isdigit()]
     if not dirs:
-        raise ConfigError(
-            "No Steam user directories found in ~/.local/share/Steam/userdata/"
-        )
+        raise ConfigError("No Steam user directories found in ~/.local/share/Steam/userdata/")
     if len(dirs) > 1:
         names = ", ".join(d.name for d in sorted(dirs))
         raise ConfigError(
-            f"Multiple Steam user directories found: {names}\n"
-            f"Set [steam] user_id in {CONFIG_PATH}"
+            f"Multiple Steam user directories found: {names}\nSet [steam] user_id in {CONFIG_PATH}"
         )
     return dirs[0].name

@@ -63,8 +63,7 @@ class ChildCollectionScreen(Screen):
             return
 
         self.query_one("#header", Label).update(
-            f"{child['name']} — max age {child['max_age']} "
-            f"({len(child.get('library', []))} games)"
+            f"{child['name']} — max age {child['max_age']} ({len(child.get('library', []))} games)"
         )
 
         games = database.load_games()
@@ -171,9 +170,7 @@ class ChildCollectionScreen(Screen):
 
     @work(thread=True)
     def _do_push(self) -> None:
-        result = subprocess.run(
-            ["pgrep", "-ix", "steam"], capture_output=True
-        )
+        result = subprocess.run(["pgrep", "-ix", "steam"], capture_output=True)
         if result.returncode == 0:
             self.app.call_from_thread(
                 self.set_status,
@@ -184,6 +181,7 @@ class ChildCollectionScreen(Screen):
         try:
             cfg = self.app.config
             from core.config import get_user_id
+
             user_id = get_user_id(cfg)
         except Exception as exc:
             self.app.call_from_thread(self.set_status, f"Config error: {exc}")
@@ -195,9 +193,7 @@ class ChildCollectionScreen(Screen):
             return
 
         try:
-            collection.push_collection(
-                user_id, self._child_name, child.get("library", [])
-            )
+            collection.push_collection(user_id, self._child_name, child.get("library", []))
             self.app.call_from_thread(
                 self.set_status,
                 f"Pushed {len(child.get('library', []))} games for {self._child_name}",

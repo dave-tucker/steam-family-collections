@@ -104,8 +104,7 @@ class LibraryScreen(Screen):
 
         if selected_key is not None and selected_key in {str(k.value) for k in table.rows}:
             target = next(
-                i for i, k in enumerate(table.rows.keys())
-                if str(k.value) == selected_key
+                i for i, k in enumerate(table.rows.keys()) if str(k.value) == selected_key
             )
             table.move_cursor(row=target)
 
@@ -147,10 +146,7 @@ class LibraryScreen(Screen):
             games = database.load_games()
             title = games.get(appid, {}).get("title", appid)
             n = len(self._search_queue)
-            self.set_status(
-                f"Searching \"{title}\""
-                + (f"  —  {n} more in queue" if n else "") + "…"
-            )
+            self.set_status(f'Searching "{title}"' + (f"  —  {n} more in queue" if n else "") + "…")
             self._do_search(appid)
 
         elif self._ratings_queue:
@@ -180,9 +176,7 @@ class LibraryScreen(Screen):
         try:
             candidates = mobygames.search_games(game["title"], api_key)
         except Exception as exc:
-            self.app.call_from_thread(
-                self.set_status, f"Search error for \"{game['title']}\": {exc}"
-            )
+            self.app.call_from_thread(self.set_status, f'Search error for "{game["title"]}": {exc}')
             self.app.call_from_thread(self._advance_queue)
             return
 
@@ -251,9 +245,7 @@ class LibraryScreen(Screen):
                 pass
             if (i + 1) % 5 == 0:
                 database.save_games(games)
-                self.app.call_from_thread(
-                    self.set_status, f"Fetching ratings… {i + 1}/{total}"
-                )
+                self.app.call_from_thread(self.set_status, f"Fetching ratings… {i + 1}/{total}")
 
         database.save_games(games)
         self.app.call_from_thread(self._on_ratings_done, rated, total)
@@ -309,7 +301,7 @@ class LibraryScreen(Screen):
 
         self.app.push_screen(EditPegiModal(game), on_result)
 
-    # ------------------------------------------------------------------ m key (force MobyGames lookup)
+    # ------------------------------------------------------------------ m key (MobyGames lookup)
 
     def action_moby_lookup(self) -> None:
         appid = self._selected_appid()
@@ -361,9 +353,7 @@ class LibraryScreen(Screen):
                 child["library"].append(appid_int)
                 child["library"].sort()
                 children.save_child(child)
-            self.set_status(
-                f"{warning}Added '{game['title']}' to {child_name}'s collection"
-            )
+            self.set_status(f"{warning}Added '{game['title']}' to {child_name}'s collection")
 
         self.app.push_screen(AddToChildModal(child_list, game), on_result)
 
@@ -374,9 +364,7 @@ class LibraryScreen(Screen):
         self.app.call_from_thread(self.set_status, "Fetching Steam library…")
         try:
             cfg = self.app.config
-            game_list = steam.fetch_library(
-                cfg["steam"]["api_key"], cfg["steam"]["steam_id"]
-            )
+            game_list = steam.fetch_library(cfg["steam"]["api_key"], cfg["steam"]["steam_id"])
             games = database.load_games()
             added = 0
             for g in game_list:
@@ -406,10 +394,10 @@ class LibraryScreen(Screen):
     def start_enrich_all(self) -> None:
         """Steam pass first, then hand remaining games to the shared queue."""
         games = database.load_games()
-        steam_key = self.app.config["steam"]["api_key"]
 
         unprocessed = [
-            appid for appid, g in games.items()
+            appid
+            for appid, g in games.items()
             if g.get("pegi_rating") is None and g.get("pegi_flag") is None
         ]
         if not unprocessed:
@@ -445,7 +433,6 @@ class LibraryScreen(Screen):
         self.app.call_from_thread(self._reload_rows)
         self.app.call_from_thread(
             self.set_status,
-            f"Steam pass done: {steam_rated} rated. "
-            f"Queuing {len(still_needed)} for MobyGames…",
+            f"Steam pass done: {steam_rated} rated. Queuing {len(still_needed)} for MobyGames…",
         )
         self.app.call_from_thread(self.enqueue_moby_search, still_needed)

@@ -72,9 +72,7 @@ def push_collection(user_id: str, collection_name: str, appids: list[int]) -> st
     raw = file_data.get("Data", "{}")
     inner = json.loads(raw) if isinstance(raw, str) else raw
 
-    collections = (
-        inner.setdefault("UserCollections", {}).setdefault("collections", {})
-    )
+    collections = inner.setdefault("UserCollections", {}).setdefault("collections", {})
 
     cid = next(
         (k for k, v in collections.items() if v.get("name") == collection_name),

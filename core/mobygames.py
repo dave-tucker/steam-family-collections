@@ -13,11 +13,11 @@ _VALID_PEGI = (3, 7, 12, 16, 18)
 # Each pattern is stripped in order; the edition regex removes the matched
 # keyword AND everything that follows it (edition info always trails the title).
 _TITLE_CLEANERS = [
-    re.compile(r"[™®©]"),                          # trademark / copyright symbols
-    re.compile(r"\s*\((TM|R)\)", re.IGNORECASE),   # (TM) / (R) as ASCII text
-    re.compile(r"\s*\(\d{4}\)"),                   # bare year: (2013)
-    re.compile(                                     # edition / remaster qualifiers
-        r"[\s:–\-]*\b(?:(?:A|An|The)\s+)?("        # optional leading article
+    re.compile(r"[™®©]"),  # trademark / copyright symbols
+    re.compile(r"\s*\((TM|R)\)", re.IGNORECASE),  # (TM) / (R) as ASCII text
+    re.compile(r"\s*\(\d{4}\)"),  # bare year: (2013)
+    re.compile(  # edition / remaster qualifiers
+        r"[\s:–\-]*\b(?:(?:A|An|The)\s+)?("  # optional leading article
         r"Game of the Year( Edition)?"
         r"|GOTY( Edition)?"
         r"|Definitive Edition"
@@ -45,9 +45,9 @@ _TITLE_CLEANERS = [
         r")\b.*$",
         re.IGNORECASE,
     ),
-    re.compile(r"[!?]+"),                           # exclamation / question marks
-    re.compile(r":"),                               # colons (subtitle separator)
-    re.compile(r"\s{2,}"),                          # collapse runs of whitespace
+    re.compile(r"[!?]+"),  # exclamation / question marks
+    re.compile(r":"),  # colons (subtitle separator)
+    re.compile(r"\s{2,}"),  # collapse runs of whitespace
 ]
 
 
@@ -153,7 +153,5 @@ def _get_with_backoff(url: str, params: dict, retries: int = 4) -> requests.Resp
 def candidate_summary(game: dict) -> str:
     title = game.get("title", "Unknown")
     year = (game.get("first_release_date") or "")[:4] or "?"
-    platforms = ", ".join(
-        p.get("platform_name", "") for p in game.get("platforms", [])[:3]
-    )
+    platforms = ", ".join(p.get("platform_name", "") for p in game.get("platforms", [])[:3])
     return f"{title} ({year}) — {platforms}"

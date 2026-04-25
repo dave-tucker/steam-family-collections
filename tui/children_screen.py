@@ -87,8 +87,7 @@ class ChildrenScreen(Screen):
             children.save_child(child)
             self._load_table()
             self.set_status(
-                f"Created '{name}' (max age {data['max_age']}, "
-                f"{len(child['library'])} games)"
+                f"Created '{name}' (max age {data['max_age']}, {len(child['library'])} games)"
             )
 
         self.app.push_screen(NewChildModal(), on_result)
@@ -110,9 +109,7 @@ class ChildrenScreen(Screen):
             added, removed = children.sync_child(child, games)
             children.save_child(child)
             self._load_table()
-            self.set_status(
-                f"Updated '{name}' max age to {age} (+{added} / -{removed} games)"
-            )
+            self.set_status(f"Updated '{name}' max age to {age} (+{added} / -{removed} games)")
 
         self.app.push_screen(EditAgeModal(child), on_result)
 
@@ -136,4 +133,5 @@ class ChildrenScreen(Screen):
         if not name:
             return
         from tui.collection_screen import ChildCollectionScreen
+
         self.app.push_screen(ChildCollectionScreen(name))

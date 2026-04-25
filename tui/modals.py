@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.screen import ModalScreen
-from textual.widgets import Button, DataTable, Footer, Input, Label, Static
 from textual.containers import Horizontal, Vertical
+from textual.screen import ModalScreen
+from textual.widgets import Button, DataTable, Input, Label, Static
 
 _VALID_PEGI = (3, 7, 12, 16, 18)
 
@@ -127,14 +127,20 @@ DisambiguationModal DataTable { height: 1fr; }
         Binding("escape", "skip", "Skip"),
     ]
 
-    def __init__(self, candidates: list[dict], game_title: str = "", queue_remaining: int = 0) -> None:
+    def __init__(
+        self, candidates: list[dict], game_title: str = "", queue_remaining: int = 0
+    ) -> None:
         super().__init__()
         self._candidates = candidates
         self._game_title = game_title
         self._queue_remaining = queue_remaining
 
     def compose(self) -> ComposeResult:
-        heading = f"Multiple results for \"{self._game_title}\"" if self._game_title else "Multiple results found"
+        heading = (
+            f'Multiple results for "{self._game_title}"'
+            if self._game_title
+            else "Multiple results found"
+        )
         if self._queue_remaining > 0:
             heading += f"  ({self._queue_remaining} more in queue)"
         with Vertical(classes="dialog"):
@@ -148,9 +154,7 @@ DisambiguationModal DataTable { height: 1fr; }
         for i, game in enumerate(self._candidates):
             title = game.get("title", "Unknown")
             year = (game.get("first_release_date") or "")[:4] or "?"
-            platforms = ", ".join(
-                p.get("platform_name", "") for p in game.get("platforms", [])[:3]
-            )
+            platforms = ", ".join(p.get("platform_name", "") for p in game.get("platforms", [])[:3])
             table.add_row(title, year, platforms, key=str(i))
         table.focus()
 
@@ -282,9 +286,7 @@ EditAgeModal { align: center middle; }
 
     def compose(self) -> ComposeResult:
         with Vertical(classes="dialog"):
-            yield Label(
-                f"Edit max age — {self._child['name']}", classes="dialog-title"
-            )
+            yield Label(f"Edit max age — {self._child['name']}", classes="dialog-title")
             yield Input(
                 value=str(self._child["max_age"]),
                 placeholder="e.g. 12",

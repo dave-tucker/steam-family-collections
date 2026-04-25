@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Steam Family Collections — TUI entry point."""
+
 from __future__ import annotations
 
 import sys
 
-from textual.app import App, ComposeResult
+from textual.app import App
 from textual.binding import Binding
 
 from core.config import ConfigError, load_config
@@ -27,18 +28,17 @@ class SteamFamilyApp(App):
 
     def on_mount(self) -> None:
         from tui.library import LibraryScreen
+
         self.push_screen(LibraryScreen())
 
     # ------------------------------------------------------------------ F1
     def action_fetch_library(self) -> None:
-        from tui.library import LibraryScreen
         screen = self._get_or_push_library()
         if screen:
             screen.start_fetch_library()
 
     # ------------------------------------------------------------------ F2
     def action_enrich_ratings(self) -> None:
-        from tui.library import LibraryScreen
         screen = self._get_or_push_library()
         if screen:
             screen.start_enrich_all()
@@ -64,6 +64,7 @@ class SteamFamilyApp(App):
     # ------------------------------------------------------------------ helpers
     def _get_or_push_library(self):
         from tui.library import LibraryScreen
+
         for screen in reversed(self.screen_stack):
             if isinstance(screen, LibraryScreen):
                 while not isinstance(self.screen, LibraryScreen):
