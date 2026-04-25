@@ -1,0 +1,7 @@
+[steam]
+api_key = "YOUR_STEAM_API_KEY"
+steam_id = "YOUR_STEAM_ID_64"
+# user_id = "12345678"  # optional; auto-detected when only one account exists
+
+[mobygames]
+api_key = "YOUR_MOBYGAMES_API_KEY"

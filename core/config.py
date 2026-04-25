@@ -1,8 +1,8 @@
 import tomllib
 from pathlib import Path
 
-CONFIG_DIR = Path.home() / ".config" / "steam-family-collections"
-CONFIG_PATH = CONFIG_DIR / "config.toml"
+_USER_CONFIG_DIR = Path.home() / ".config" / "steam-family-collections"
+_USER_CONFIG_PATH = _USER_CONFIG_DIR / "config.toml"
 DATA_DIR = Path.home() / ".local" / "share" / "steam-family-collections"
 GAMES_FILE = DATA_DIR / "games.json"
 CHILDREN_DIR = DATA_DIR / "children"
@@ -24,15 +24,25 @@ class ConfigError(Exception):
     pass
 
 
+def _find_config_path() -> Path | None:
+    local = Path.cwd() / "config.toml"
+    if local.exists():
+        return local
+    if _USER_CONFIG_PATH.exists():
+        return _USER_CONFIG_PATH
+    return None
+
+
 def load_config() -> dict:
-    if not CONFIG_PATH.exists():
-        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        CONFIG_PATH.write_text(_EXAMPLE)
+    config_path = _find_config_path()
+    if config_path is None:
+        _USER_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        _USER_CONFIG_PATH.write_text(_EXAMPLE)
         raise ConfigError(
-            f"Config file created at {CONFIG_PATH}\nFill in your API keys and run again."
+            f"Config file created at {_USER_CONFIG_PATH}\nFill in your API keys and run again."
         )
 
-    with open(CONFIG_PATH, "rb") as f:
+    with open(config_path, "rb") as f:
         config = tomllib.load(f)
 
     for section, key in [
@@ -42,7 +52,7 @@ def load_config() -> dict:
     ]:
         val = config.get(section, {}).get(key, "")
         if not val or str(val).startswith(_PLACEHOLDER_PREFIX):
-            raise ConfigError(f"Missing or unconfigured: [{section}] {key} in {CONFIG_PATH}")
+            raise ConfigError(f"Missing or unconfigured: [{section}] {key} in {config_path}")
 
     return config
 
