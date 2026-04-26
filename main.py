@@ -14,6 +14,7 @@ from core.database import ensure_data_dir
 
 class SteamFamilyApp(App):
     TITLE = "Steam Family Collections"
+    ENABLE_COMMAND_PALETTE = False
 
     BINDINGS = [
         Binding("f1", "fetch_library", "Fetch Library", show=True, priority=True),

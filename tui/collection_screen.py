@@ -37,7 +37,7 @@ class ChildCollectionScreen(Screen):
         Binding("a", "add_game", "Add Game", show=True),
         Binding("s", "sync_collection", "Sync", show=True),
         Binding("p", "push_to_steam", "Push to Steam", show=True),
-        Binding("backspace", "pop_screen", "Back", show=True),
+        Binding("backspace", "pop_screen", "Back", show=True, priority=True),
     ]
 
     def __init__(self, child_name: str) -> None:
