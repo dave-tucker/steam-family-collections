@@ -6,8 +6,6 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, DataTable, Input, Label, Static
 
-_VALID_PEGI = (3, 7, 12, 16, 18)
-
 _SHARED_CSS = """
 .dialog {
     width: 70;
@@ -60,11 +58,11 @@ ConfirmModal { align: center middle; }
             self.dismiss(False)
 
 
-class EditPegiModal(ModalScreen):
+class EditRatingModal(ModalScreen):
     DEFAULT_CSS = (
         _SHARED_CSS
         + """
-EditPegiModal { align: center middle; }
+EditRatingModal { align: center middle; }
 """
     )
 
@@ -73,10 +71,10 @@ EditPegiModal { align: center middle; }
         self._game = game
 
     def compose(self) -> ComposeResult:
-        current = str(self._game.get("pegi_rating") or "")
+        current = str(self._game.get("age_rating") or "")
         with Vertical(classes="dialog"):
-            yield Label(f"Edit PEGI rating — {self._game['title']}", classes="dialog-title")
-            yield Label(f"Valid values: {', '.join(str(p) for p in _VALID_PEGI)}")
+            yield Label(f"Edit age rating — {self._game['title']}", classes="dialog-title")
+            yield Label("Enter any non-negative integer")
             yield Input(value=current, placeholder="e.g. 12", id="rating-input")
             yield Label("", id="error-label")
             with Horizontal(classes="dialog-buttons"):
@@ -96,13 +94,10 @@ EditPegiModal { align: center middle; }
         raw = self.query_one("#rating-input", Input).value.strip()
         try:
             val = int(raw)
+            if val < 0:
+                raise ValueError
         except ValueError:
-            self.query_one("#error-label", Label).update("Must be a number")
-            return
-        if val not in _VALID_PEGI:
-            self.query_one("#error-label", Label).update(
-                f"Must be one of: {', '.join(str(p) for p in _VALID_PEGI)}"
-            )
+            self.query_one("#error-label", Label).update("Must be a non-negative integer")
             return
         self.dismiss(val)
 
@@ -116,7 +111,7 @@ class DisambiguationModal(ModalScreen):
         _SHARED_CSS
         + """
 DisambiguationModal { align: center middle; }
-DisambiguationModal .dialog { height: 30; width: 90; }
+DisambiguationModal .dialog { height: 35; width: 90; }
 DisambiguationModal DataTable { height: 1fr; }
 """
     )
@@ -230,7 +225,7 @@ NewChildModal { align: center middle; }
             yield Label("New Child Profile", classes="dialog-title")
             yield Label("Name:")
             yield Input(placeholder="e.g. Alice", id="name-input")
-            yield Label("Max PEGI age:")
+            yield Label("Max age rating:")
             yield Input(placeholder="e.g. 12", id="age-input")
             yield Label("", id="error-label")
             with Horizontal(classes="dialog-buttons"):
@@ -434,12 +429,12 @@ AddGameModal DataTable { height: 1fr; }
     def _rebuild_table(self, games: list[dict]) -> None:
         table = self.query_one(DataTable)
         table.clear(columns=True)
-        table.add_columns("Title", "AppID", "PEGI")
+        table.add_columns("Title", "AppID", "Age Rating")
         for game in games:
             table.add_row(
                 game["title"],
                 str(game["appid"]),
-                str(game.get("pegi_rating") or ""),
+                str(game.get("age_rating") or ""),
                 key=str(game["appid"]),
             )
 
@@ -466,3 +461,54 @@ AddGameModal DataTable { height: 1fr; }
 
     def action_cancel(self) -> None:
         self.dismiss(None)
+
+
+class CustomSearchModal(ModalScreen):
+    DEFAULT_CSS = (
+        _SHARED_CSS
+        + """
+CustomSearchModal { align: center middle; }
+"""
+    )
+
+    def __init__(self, game_title: str) -> None:
+        super().__init__()
+        self._game_title = game_title
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="dialog"):
+            yield Label(
+                f"MobyGames search — {self._game_title}",
+                classes="dialog-title",
+            )
+            yield Label("Search term (sent to MobyGames as-is):")
+            yield Input(value=self._game_title, placeholder="e.g. Half-Life 2", id="search-input")
+            yield Label("", id="error-label")
+            with Horizontal(classes="dialog-buttons"):
+                yield Button("Search", variant="success", id="search")
+                yield Button("Cancel", variant="primary", id="cancel")
+
+    def on_mount(self) -> None:
+        inp = self.query_one("#search-input", Input)
+        inp.focus()
+        inp.cursor_position = len(inp.value)
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "cancel":
+            self.dismiss(None)
+        else:
+            self._try_submit()
+
+    def on_input_submitted(self, _event: Input.Submitted) -> None:
+        self._try_submit()
+
+    def _try_submit(self) -> None:
+        term = self.query_one("#search-input", Input).value.strip()
+        if not term:
+            self.query_one("#error-label", Label).update("Search term is required")
+            return
+        self.dismiss(term)
+
+    def on_key(self, event) -> None:
+        if event.key == "escape":
+            self.dismiss(None)

@@ -1,53 +1,56 @@
-# Steam cloud-storage-namespace-1.json schema
+# Steam cloud-storage-namespace-1.json schema (real format)
 #
-# Top-level object:
-#   "version"  (int): format version, observed value 2
-#   "Data"     (str): JSON-encoded string containing all collection data
+# Top-level: JSON array of [key, entry] pairs.
 #
-# After parsing the "Data" string the inner object contains:
-#   "UserCollections":
-#     "collections": dict keyed by UUID string, each entry:
-#       "id"        (str):        UUID of this collection
-#       "name"      (str):        human-readable display name
-#       "added"     (int[]):      AppIDs included in the collection
-#       "removed"   (int[]):      AppIDs explicitly removed
-#       "timestamp" (int):        Unix epoch of last modification
+# Each entry object has:
+#   "key"        (str):  same as the array key
+#   "timestamp"  (int):  Unix epoch of last modification
+#   "value"      (str):  JSON-encoded payload (absent on deleted entries)
+#   "version"    (str):  monotonically increasing integer as a string
+#   "is_deleted" (bool): present and true on tombstone entries
 #
-# Note: some Steam versions store "Data" as a parsed object rather than
-# a JSON-encoded string — both forms are handled below.
+# User collections have keys of the form "user-collections.<id>".
+# The parsed "value" payload contains:
+#   "id"       (str):   collection ID (matches suffix of key)
+#   "name"     (str):   human-readable display name
+#   "added"    (int[]): AppIDs included in the collection
+#   "removed"  (int[]): AppIDs explicitly excluded
 #
-# File location:
+# File location (native install):
 #   ~/.local/share/Steam/userdata/<user_id>/config/cloudstorage/cloud-storage-namespace-1.json
+# Flatpak install:
+#   ~/.var/app/com.valvesoftware.Steam/data/Steam/userdata/<user_id>/config/cloudstorage/...
 
+import base64
 import json
 import os
 import shutil
 import tempfile
 import time
-import uuid
 from pathlib import Path
 
-
-def get_collection_path(user_id: str) -> Path:
-    return (
-        Path.home()
-        / ".local/share/Steam/userdata"
-        / str(user_id)
-        / "config/cloudstorage/cloud-storage-namespace-1.json"
-    )
+_COLLECTION_KEY_PREFIX = "user-collections."
 
 
-def _load(path: Path) -> dict:
+def _default_steam_dir() -> Path:
+    native = Path.home() / ".local/share/Steam"
+    flatpak = Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam"
+    return native if native.exists() else flatpak
+
+
+def get_collection_path(user_id: str, steam_dir: Path | None = None) -> Path:
+    base = steam_dir or _default_steam_dir()
+    return base / "userdata" / str(user_id) / "config/cloudstorage/cloud-storage-namespace-1.json"
+
+
+def _load(path: Path) -> list:
     if not path.exists():
-        return {
-            "version": 2,
-            "Data": json.dumps({"UserCollections": {"collections": {}}}),
-        }
+        return []
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
-def _save(path: Path, data: dict) -> None:
+def _save(path: Path, entries: list) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
         mode="w",
@@ -56,36 +59,77 @@ def _save(path: Path, data: dict) -> None:
         suffix=".tmp",
         encoding="utf-8",
     ) as f:
-        json.dump(data, f)
+        json.dump(entries, f)
         tmp = f.name
     os.replace(tmp, path)
 
 
-def push_collection(user_id: str, collection_name: str, appids: list[int]) -> str:
-    path = get_collection_path(user_id)
+def _random_id() -> str:
+    return base64.b64encode(os.urandom(9)).decode()
+
+
+def push_collection(
+    user_id: str,
+    collection_name: str,
+    appids: list[int],
+    steam_dir: Path | None = None,
+) -> str:
+    path = get_collection_path(user_id, steam_dir)
 
     if path.exists():
         shutil.copy2(path, path.with_suffix(".json.bak"))
 
-    file_data = _load(path)
+    entries = _load(path)
 
-    raw = file_data.get("Data", "{}")
-    inner = json.loads(raw) if isinstance(raw, str) else raw
-
-    collections = inner.setdefault("UserCollections", {}).setdefault("collections", {})
-
-    cid = next(
-        (k for k, v in collections.items() if v.get("name") == collection_name),
-        str(uuid.uuid4()),
+    max_version = max(
+        (
+            int(e[1].get("version", 0))
+            for e in entries
+            if isinstance(e, list) and len(e) == 2 and isinstance(e[1], dict)
+        ),
+        default=0,
     )
-    collections[cid] = {
+
+    existing_idx: int | None = None
+    existing_id: str | None = None
+    for i, entry in enumerate(entries):
+        if not isinstance(entry, list) or len(entry) != 2:
+            continue
+        key, obj = entry
+        if not isinstance(key, str) or not key.startswith(_COLLECTION_KEY_PREFIX):
+            continue
+        if obj.get("is_deleted") or not obj.get("value"):
+            continue
+        try:
+            value = json.loads(obj["value"])
+            if value.get("name") == collection_name:
+                existing_idx = i
+                existing_id = value["id"]
+                break
+        except (json.JSONDecodeError, KeyError):
+            continue
+
+    cid = existing_id or f"uc-{_random_id()}"
+    collection_data = {
         "id": cid,
         "name": collection_name,
         "added": sorted(int(a) for a in appids),
         "removed": [],
-        "timestamp": int(time.time()),
     }
+    new_entry = [
+        f"{_COLLECTION_KEY_PREFIX}{cid}",
+        {
+            "key": f"{_COLLECTION_KEY_PREFIX}{cid}",
+            "timestamp": int(time.time()),
+            "value": json.dumps(collection_data),
+            "version": str(max_version + 1),
+        },
+    ]
 
-    file_data["Data"] = json.dumps(inner) if isinstance(raw, str) else inner
-    _save(path, file_data)
+    if existing_idx is not None:
+        entries[existing_idx] = new_entry
+    else:
+        entries.append(new_entry)
+
+    _save(path, entries)
     return cid

@@ -2,6 +2,32 @@
 api_key = "YOUR_STEAM_API_KEY"
 steam_id = "YOUR_STEAM_ID_64"
 # user_id = "12345678"  # optional; auto-detected when only one account exists
+# path = "/home/user/.local/share/Steam"  # optional; auto-detects Flatpak then native install
 
 [mobygames]
 api_key = "YOUR_MOBYGAMES_API_KEY"
+
+# Rating preferences (optional — defaults shown below)
+# [ratings]
+# Schemes are tried in order; first match wins.
+# Falls back to the average of all available ratings if none match.
+# preference = ["bbfc", "pegi", "usk", "esrb"]
+
+# Map non-numeric rating codes to age values.
+# Defaults for ESRB and BBFC are built-in; override or extend here.
+# [ratings.map.esrb]
+# "EC" = 3
+# "E" = 3
+# "E10+" = 7
+# "T" = 12
+# "M" = 16
+# "AO" = 18
+
+# [ratings.map.bbfc]
+# "U" = 0
+# "PG" = 5
+# "12A" = 12
+# "12" = 12
+# "15" = 15
+# "18" = 18
+# "R18" = 18

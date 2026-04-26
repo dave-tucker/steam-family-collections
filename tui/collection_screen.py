@@ -69,14 +69,14 @@ class ChildCollectionScreen(Screen):
         games = database.load_games()
         table = self.query_one(DataTable)
         table.clear(columns=True)
-        table.add_columns("Title", "AppID", "PEGI Rating", "Source")
+        table.add_columns("Title", "AppID", "Age Rating", "Scheme")
         for appid_int in child.get("library", []):
             game = games.get(str(appid_int), {})
             table.add_row(
                 game.get("title", f"App {appid_int}"),
                 str(appid_int),
-                str(game.get("pegi_rating") or ""),
-                game.get("pegi_source") or "",
+                str(game.get("age_rating") or ""),
+                game.get("rating_scheme") or "",
                 key=str(appid_int),
             )
 
@@ -123,9 +123,9 @@ class ChildCollectionScreen(Screen):
         eligible = [
             g
             for g in games.values()
-            if g.get("pegi_rating") is not None
+            if g.get("age_rating") is not None
             and g.get("pegi_flag") is None
-            and g["pegi_rating"] <= child["max_age"]
+            and g["age_rating"] <= child["max_age"]
             and g["appid"] not in in_library
         ]
         eligible.sort(key=lambda g: g["title"].lower())
@@ -180,9 +180,10 @@ class ChildCollectionScreen(Screen):
 
         try:
             cfg = self.app.config
-            from core.config import get_user_id
+            from core.config import get_steam_dir, get_user_id
 
             user_id = get_user_id(cfg)
+            steam_dir = get_steam_dir(cfg)
         except Exception as exc:
             self.app.call_from_thread(self.set_status, f"Config error: {exc}")
             return
@@ -193,7 +194,7 @@ class ChildCollectionScreen(Screen):
             return
 
         try:
-            collection.push_collection(user_id, self._child_name, child.get("library", []))
+            collection.push_collection(user_id, self._child_name, child.get("library", []), steam_dir)
             self.app.call_from_thread(
                 self.set_status,
                 f"Pushed {len(child.get('library', []))} games for {self._child_name}",

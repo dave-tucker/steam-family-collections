@@ -1,12 +1,12 @@
 from core.children import compute_library, sync_child
 
 GAMES = {
-    "10": {"name": "Game A", "pegi_rating": 3},
-    "20": {"name": "Game B", "pegi_rating": 12},
-    "30": {"name": "Game C", "pegi_rating": 16},
-    "40": {"name": "Game D", "pegi_rating": 18},
-    "50": {"name": "Game E", "pegi_rating": None},  # unrated
-    "60": {"name": "Game F", "pegi_rating": 7, "pegi_flag": "violence"},  # flagged
+    "10": {"name": "Game A", "age_rating": 3},
+    "20": {"name": "Game B", "age_rating": 12},
+    "30": {"name": "Game C", "age_rating": 16},
+    "40": {"name": "Game D", "age_rating": 18},
+    "50": {"name": "Game E", "age_rating": None},  # unrated
+    "60": {"name": "Game F", "age_rating": 7, "pegi_flag": "violence"},  # flagged
 }
 
 

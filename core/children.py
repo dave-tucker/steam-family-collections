@@ -37,9 +37,9 @@ def compute_library(child: dict, games: dict) -> list[int]:
     return sorted(
         int(appid)
         for appid, game in games.items()
-        if game.get("pegi_rating") is not None
+        if game.get("age_rating") is not None
         and game.get("pegi_flag") is None
-        and game["pegi_rating"] <= max_age
+        and game["age_rating"] <= max_age
     )
 
 

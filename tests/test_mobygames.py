@@ -1,6 +1,6 @@
 import pytest
 
-from core.mobygames import _parse_pegi, candidate_summary, clean_title
+from core.mobygames import _parse_rating, candidate_summary, clean_title
 
 
 @pytest.mark.parametrize(
@@ -37,22 +37,32 @@ def test_clean_title(raw, expected):
 @pytest.mark.parametrize(
     "rating, expected",
     [
-        ({"rating_system_name": "PEGI", "rating_name": "PEGI 12"}, 12),
-        ({"rating_system_name": "PEGI", "rating_name": "PEGI 3"}, 3),
-        ({"rating_system_name": "PEGI", "rating_name": "PEGI 18"}, 18),
-        # Values snap up to the next valid bracket
-        ({"rating_system_name": "PEGI", "rating_name": "15"}, 16),
-        ({"rating_system_name": "PEGI", "rating_name": "6"}, 7),
-        # Non-PEGI systems ignored
-        ({"rating_system_name": "ESRB", "rating_name": "T"}, None),
-        ({"rating_system_name": "USK", "rating_name": "12"}, None),
-        # Malformed entries
-        ({"rating_system_name": "PEGI", "rating_name": "Adult"}, None),
+        # PEGI ratings return (scheme, raw_value)
+        ({"rating_system_name": "PEGI Rating", "rating_name": "PEGI 12"}, ("pegi", "PEGI 12")),
+        ({"rating_system_name": "PEGI Rating", "rating_name": "PEGI 3"}, ("pegi", "PEGI 3")),
+        ({"rating_system_name": "PEGI Rating", "rating_name": "18"}, ("pegi", "18")),
+        # ESRB
+        ({"rating_system_name": "ESRB Rating", "rating_name": "T - Teen"}, ("esrb", "T - Teen")),
+        (
+            {"rating_system_name": "ESRB Rating", "rating_name": "M - Mature 17+"},
+            ("esrb", "M - Mature 17+"),
+        ),
+        # USK
+        ({"rating_system_name": "USK Rating", "rating_name": "12"}, ("usk", "12")),
+        # BBFC (via PEGI/BBFC combined system name)
+        ({"rating_system_name": "PEGI/BBFC Rating", "rating_name": "12"}, ("bbfc", "12")),
+        # Unknown system
+        ({"rating_system_name": "ACB Rating", "rating_name": "MA15+"}, ("acb", "MA15+")),
+        # Completely unknown system → None
+        ({"rating_system_name": "SomeUnknownBoard", "rating_name": "7"}, None),
+        # Missing rating_name → None
+        ({"rating_system_name": "PEGI Rating", "rating_name": ""}, None),
+        # Empty dict → None
         ({}, None),
     ],
 )
-def test_parse_pegi(rating, expected):
-    assert _parse_pegi(rating) == expected
+def test_parse_rating(rating, expected):
+    assert _parse_rating(rating) == expected
 
 
 def test_candidate_summary_full():

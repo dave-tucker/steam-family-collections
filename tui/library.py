@@ -12,12 +12,14 @@ from textual.widgets import DataTable, Footer, Label
 import core.children as children
 import core.database as database
 import core.mobygames as mobygames
+import core.ratings as ratings_module
 import core.steam as steam
 from tui.modals import (
     AddToChildModal,
     ConfirmModal,
+    CustomSearchModal,
     DisambiguationModal,
-    EditPegiModal,
+    EditRatingModal,
     SetMobyIdModal,
 )
 
@@ -36,7 +38,7 @@ class LibraryScreen(Screen):
     BINDINGS = [
         Binding("d", "delete_game", "Delete", show=True),
         Binding("e", "edit_rating", "Edit Rating", show=True),
-        Binding("m", "moby_lookup", "MobyGames", show=True),
+        Binding("m", "moby_lookup", "Search MobyGames…", show=True),
         Binding("a", "add_to_child", "Add to Child", show=True),
         Binding("f", "cycle_filter", "Filter", show=True),
         Binding("i", "set_moby_id", "Set Moby ID", show=True),
@@ -51,6 +53,8 @@ class LibraryScreen(Screen):
         self._current_appid: str | None = None
         self._queue_active = False
         self._filter: str = "all"
+        self._manual_appids: set[str] = set()
+        self._custom_search_terms: dict[str, str] = {}
 
     # ------------------------------------------------------------------ table
 
@@ -77,8 +81,8 @@ class LibraryScreen(Screen):
         table.add_column("Title", width=title_w)
         table.add_column("AppID", width=10)
         table.add_column("Moby ID", width=10)
-        table.add_column("PEGI Rating", width=11)
-        table.add_column("Source", width=10)
+        table.add_column("Age Rating", width=11)
+        table.add_column("Scheme", width=10)
         table.add_column("Flag", width=10)
 
     def _matches_filter(self, game: dict) -> bool:
@@ -87,7 +91,7 @@ class LibraryScreen(Screen):
         has_moby = bool(game.get("moby_id"))
         flag = game.get("pegi_flag") or ""
         if self._filter == "unrated":
-            return game.get("pegi_rating") is None
+            return game.get("age_rating") is None
         if self._filter == "ambiguous":
             return flag == "ambiguous" and not has_moby
         return True
@@ -116,8 +120,8 @@ class LibraryScreen(Screen):
                 game["title"],
                 str(game["appid"]),
                 str(game.get("moby_id") or ""),
-                str(game.get("pegi_rating") or ""),
-                game.get("pegi_source") or "",
+                str(game.get("age_rating") or ""),
+                game.get("rating_scheme") or "",
                 flag,
                 key=appid,
             )
@@ -206,10 +210,14 @@ class LibraryScreen(Screen):
             return
 
         api_key = self.app.config["mobygames"]["api_key"]
+        custom_term = self._custom_search_terms.pop(appid, None)
+        display_title = custom_term or game["title"]
         try:
-            candidates = mobygames.search_games(game["title"], api_key)
+            candidates = mobygames.search_games(
+                display_title, api_key, raw=custom_term is not None
+            )
         except Exception as exc:
-            self.app.call_from_thread(self.set_status, f'Search error for "{game["title"]}": {exc}')
+            self.app.call_from_thread(self.set_status, f'Search error for "{display_title}": {exc}')
             self.app.call_from_thread(self._advance_queue)
             return
 
@@ -226,6 +234,7 @@ class LibraryScreen(Screen):
         games[appid]["moby_id"] = moby_id
         if games[appid].get("pegi_flag") == "ambiguous":
             games[appid]["pegi_flag"] = None
+        games[appid]["ratings"] = {}
         database.save_games(games)
         self._ratings_queue.append(appid)
         self._reload_rows()
@@ -234,10 +243,21 @@ class LibraryScreen(Screen):
     def _on_unmatched(self, appid: str, flag: str) -> None:
         """Store flag for a game with no usable match. Main thread."""
         games = database.load_games()
-        games[appid]["pegi_flag"] = flag
-        database.save_games(games)
-        self._reload_rows()
-        self._advance_queue()
+        if appid in self._manual_appids:
+            self._manual_appids.discard(appid)
+            title = games.get(appid, {}).get("title", appid)
+            self._reload_rows()
+            self.set_status(f'No MobyGames results for "{title}" — use i to set the ID manually')
+            if self._search_queue or self._ratings_queue:
+                self._advance_queue()
+            else:
+                self._queue_active = False
+                self._current_appid = None
+        else:
+            games[appid]["pegi_flag"] = flag
+            database.save_games(games)
+            self._reload_rows()
+            self._advance_queue()
 
     def _show_disambiguation(self, appid: str, candidates: list) -> None:
         """Show disambiguation modal then continue queue. Main thread."""
@@ -260,7 +280,10 @@ class LibraryScreen(Screen):
     def _fetch_all_ratings(self, appids: list[str]) -> None:
         """Fetch per-platform ratings for all queued moby_ids. Runs in a thread."""
         games = database.load_games()
-        api_key = self.app.config["mobygames"]["api_key"]
+        cfg = self.app.config
+        api_key = cfg["mobygames"]["api_key"]
+        preference = ratings_module.get_preference(cfg)
+        rating_map = ratings_module.get_rating_map(cfg)
         rated = 0
         total = len(appids)
 
@@ -269,10 +292,13 @@ class LibraryScreen(Screen):
             if not game or not game.get("moby_id"):
                 continue
             try:
-                rating = mobygames.fetch_pegi_for_moby_id(game["moby_id"], api_key)
-                if rating is not None:
-                    game["pegi_rating"] = rating
-                    game["pegi_source"] = "mobygames"
+                raw_ratings = mobygames.fetch_ratings_for_moby_id(game["moby_id"], api_key)
+                game["ratings"] = raw_ratings
+                result = ratings_module.select_rating(raw_ratings, preference, rating_map)
+                if result:
+                    scheme, age = result
+                    game["age_rating"] = age
+                    game["rating_scheme"] = scheme
                     rated += 1
                 else:
                     game["pegi_flag"] = "unrated"
@@ -326,14 +352,14 @@ class LibraryScreen(Screen):
 
         def on_result(rating: int | None) -> None:
             if rating is not None:
-                game["pegi_rating"] = rating
-                game["pegi_source"] = "manual"
+                game["age_rating"] = rating
+                game["rating_scheme"] = "manual"
                 game["pegi_flag"] = None
                 database.save_games(games)
                 self._reload_rows()
-                self.set_status(f"Set '{game['title']}' to PEGI {rating} (manual)")
+                self.set_status(f"Set '{game['title']}' to age rating {rating} (manual)")
 
-        self.app.push_screen(EditPegiModal(game), on_result)
+        self.app.push_screen(EditRatingModal(game), on_result)
 
     # ------------------------------------------------------------------ m key (MobyGames lookup)
 
@@ -343,14 +369,24 @@ class LibraryScreen(Screen):
             return
         games = database.load_games()
         game = games.get(appid)
-        if game:
-            game["pegi_rating"] = None
-            game["pegi_source"] = None
+        if not game:
+            return
+
+        def on_result(term: str | None) -> None:
+            if term is None:
+                return
+            game["age_rating"] = None
+            game["rating_scheme"] = None
+            game["ratings"] = {}
             game["pegi_flag"] = None
             game["moby_id"] = None
             database.save_games(games)
             self._reload_rows()
-        self.enqueue_moby_search([appid])
+            self._custom_search_terms[appid] = term
+            self._manual_appids.add(appid)
+            self.enqueue_moby_search([appid])
+
+        self.app.push_screen(CustomSearchModal(game["title"]), on_result)
 
     # ------------------------------------------------------------------ i key (set moby ID)
 
@@ -403,9 +439,10 @@ class LibraryScreen(Screen):
             warning = ""
             if game.get("pegi_flag"):
                 warning = f"Warning: game is flagged ({game['pegi_flag']}). "
-            elif game.get("pegi_rating") and game["pegi_rating"] > child["max_age"]:
+            elif game.get("age_rating") and game["age_rating"] > child["max_age"]:
+                scheme = game.get("rating_scheme", "?")
                 warning = (
-                    f"Warning: PEGI {game['pegi_rating']} > "
+                    f"Warning: age rating {game['age_rating']} ({scheme}) > "
                     f"{child_name}'s max age {child['max_age']}. "
                 )
             if appid_int not in child["library"]:
@@ -432,8 +469,9 @@ class LibraryScreen(Screen):
                     games[key] = {
                         "appid": g["appid"],
                         "title": g.get("name", f"App {g['appid']}"),
-                        "pegi_rating": None,
-                        "pegi_source": None,
+                        "age_rating": None,
+                        "rating_scheme": None,
+                        "ratings": {},
                         "pegi_flag": None,
                         "moby_id": None,
                     }
@@ -457,7 +495,7 @@ class LibraryScreen(Screen):
         unprocessed = [
             appid
             for appid, g in games.items()
-            if g.get("pegi_rating") is None and g.get("pegi_flag") is None
+            if g.get("age_rating") is None and g.get("pegi_flag") is None
         ]
         if not unprocessed:
             self.app.call_from_thread(self.set_status, "Nothing to enrich")
@@ -466,19 +504,25 @@ class LibraryScreen(Screen):
         self.app.call_from_thread(
             self.set_status, f"Steam pass: checking {len(unprocessed)} games…"
         )
+        preference = ratings_module.get_preference(self.app.config)
+        rating_map = ratings_module.get_rating_map(self.app.config)
         steam_rated = 0
         still_needed: list[str] = []
 
         for i, appid in enumerate(unprocessed):
             game = games[appid]
             try:
-                rating = steam.fetch_pegi_from_steam(int(appid))
+                raw_ratings = steam.fetch_ratings_from_steam(int(appid))
                 time.sleep(1)
-                if rating:
-                    game["pegi_rating"] = rating
-                    game["pegi_source"] = "steam"
-                    steam_rated += 1
-                    continue
+                if raw_ratings:
+                    game["ratings"] = raw_ratings
+                    result = ratings_module.select_rating(raw_ratings, preference, rating_map)
+                    if result:
+                        scheme, age = result
+                        game["age_rating"] = age
+                        game["rating_scheme"] = scheme
+                        steam_rated += 1
+                        continue
             except Exception:
                 pass
             still_needed.append(appid)

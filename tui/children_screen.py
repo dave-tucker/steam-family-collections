@@ -32,7 +32,7 @@ class ChildrenScreen(Screen):
         Binding("n", "new_child", "New Child", show=True),
         Binding("e", "edit_age", "Edit Age", show=True),
         Binding("d", "delete_child", "Delete", show=True),
-        Binding("enter", "open_collection", "Open", show=True),
+        Binding("enter", "open_collection", "Open", show=True, priority=True),
     ]
 
     def compose(self) -> ComposeResult:

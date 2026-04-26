@@ -19,6 +19,11 @@ api_key = "YOUR_MOBYGAMES_API_KEY"
 
 _PLACEHOLDER_PREFIX = "YOUR_"
 
+_STEAM_DIR_CANDIDATES = [
+    Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam",  # Flatpak (preferred)
+    Path.home() / ".local/share/Steam",                            # native
+]
+
 
 class ConfigError(Exception):
     pass
@@ -57,18 +62,30 @@ def load_config() -> dict:
     return config
 
 
+def get_steam_dir(config: dict) -> Path:
+    """Return the Steam data directory from config or by auto-detection."""
+    configured = config.get("steam", {}).get("path")
+    if configured:
+        return Path(configured)
+    for candidate in _STEAM_DIR_CANDIDATES:
+        if candidate.exists():
+            return candidate
+    return _STEAM_DIR_CANDIDATES[0]
+
+
 def get_user_id(config: dict) -> str:
     user_id = config.get("steam", {}).get("user_id")
     if user_id:
         return str(user_id)
 
-    userdata = Path.home() / ".local" / "share" / "Steam" / "userdata"
+    steam_dir = get_steam_dir(config)
+    userdata = steam_dir / "userdata"
     if not userdata.exists():
-        raise ConfigError("Steam userdata directory not found: ~/.local/share/Steam/userdata/")
+        raise ConfigError(f"Steam userdata directory not found: {userdata}")
 
     dirs = [d for d in userdata.iterdir() if d.is_dir() and d.name.isdigit()]
     if not dirs:
-        raise ConfigError("No Steam user directories found in ~/.local/share/Steam/userdata/")
+        raise ConfigError(f"No Steam user directories found in {userdata}")
     if len(dirs) > 1:
         names = ", ".join(d.name for d in sorted(dirs))
         raise ConfigError(
