@@ -3,13 +3,20 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["."]
+include = [
+    "/main.py",
+    "/core/",
+    "/tui/",
+    "/config.example.toml",
+]
 
 [project]
 name = "steam-family-collections"
 version = "0.1.0"
 description = "TUI app to manage age-appropriate Steam game collections for children"
+readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
 dependencies = [
     "textual>=0.70.0",
     "requests>=2.28.0",
@@ -17,6 +24,9 @@ dependencies = [
 
 [project.scripts]
 steam-family-collections = "main:main"
+
+[project.urls]
+Repository = "https://github.com/dave-tucker/steam-family-collections"
 
 [dependency-groups]
 dev = [

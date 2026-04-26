@@ -1,6 +1,22 @@
 # Steam Family Collections
 
-A terminal UI app that helps parents create age-appropriate Steam game collections for their children, based on PEGI ratings. It fetches your Steam library, enriches games with PEGI ratings via MobyGames, and pushes filtered collections directly into Steam's cloud storage so they appear on your child's account.
+I have a large Steam library, and I want to share it with my Kids.
+Steam offers 2 options:
+
+- Allow all games
+- Allow only selected games
+
+The latter is the only sensible option, but there is no way to quickly
+filter your library to "just games suitable for ages 12 and below" for
+you to add them.
+
+Enter, `steam-family-collections`. A TUI app that helps parents create
+age-appropriate Steam game collections for their children. 
+
+- Fetches your Steam library using the Steam API
+- Enriches games with age ratings via MobyGames (requires API key)
+- Supports multiple rating schemes: PEGI, BBFC, ESRB, USK, and more
+- Pushes filtered collections directly into Steam
 
 ## Prerequisites
 
@@ -11,54 +27,79 @@ A terminal UI app that helps parents create age-appropriate Steam game collectio
 
 ## Installation
 
+### Via uv (recommended)
+
 ```bash
-git clone https://github.com/dtucker/steam-family-collections
+uv tool install git+https://github.com/dave-tucker/steam-family-collections
+```
+
+Then run with:
+
+```bash
+steam-family-collections
+```
+
+### From source
+
+```bash
+git clone https://github.com/dave-tucker/steam-family-collections
 cd steam-family-collections
 uv sync
+uv run python main.py
 ```
 
 ## Configuration
 
-Copy the example config and fill in your API keys:
-
-```bash
-cp config.example.toml config.toml
-```
-
 The app looks for `config.toml` in the current directory first, then falls back to `~/.config/steam-family-collections/config.toml`.
+
+On first run with no config file present, a template is written to the user config path automatically.
 
 ```toml
 [steam]
 api_key = "YOUR_STEAM_API_KEY"
 steam_id = "YOUR_STEAM_ID_64"
 # user_id = "12345678"  # optional; auto-detected when only one account exists
+# path = "/home/user/.local/share/Steam"  # optional; auto-detects Flatpak then native
 
 [mobygames]
 api_key = "YOUR_MOBYGAMES_API_KEY"
 ```
 
+See `config.example.toml` for the full reference, including `[ratings]` options for configuring rating scheme preference order and custom value maps.
+
 To find your `steam_id`, visit your Steam profile page — the 64-bit ID appears in the URL (e.g. `https://steamcommunity.com/profiles/76561198XXXXXXXXX`).
 
 ## Usage
 
-```bash
-uv run python main.py
-```
-
-| Key | Action |
-|-----|--------|
-| F1  | Fetch your Steam library |
-| F2  | Enrich games with PEGI ratings (via MobyGames) |
-| F3  | Manage child profiles |
-| q   | Quit |
+| Key       | Screen     | Action                                  |
+|-----------|------------|-----------------------------------------|
+| F1        | Main       | Fetch your Steam library                |
+| F2        | Main       | Enrich games with age ratings           |
+| F3        | Main       | Manage child profiles                   |
+| q         | Main       | Quit                                    |
+| m         | Library    | Search MobyGames for selected game      |
+| e         | Library    | Edit age rating manually                |
+| i         | Library    | Set MobyGames ID manually               |
+| d         | Library    | Delete rating for selected game         |
+| a         | Library    | Add selected game to a child's list     |
+| f         | Library    | Cycle filter (all / unrated / ambiguous)|
+| Enter     | Children   | Open child's collection                 |
+| n         | Children   | New child profile                       |
+| e         | Children   | Edit child's max age                    |
+| d         | Children   | Delete child profile                    |
+| r         | Collection | Remove selected game                    |
+| a         | Collection | Add a game manually                     |
+| s         | Collection | Sync collection against current ratings |
+| p         | Collection | Push collection to Steam                |
+| Backspace | Collection | Back to children list                   |
 
 ### Workflow
 
 1. **F1 — Fetch Library**: Downloads your owned games from the Steam API.
-2. **F2 — Enrich Ratings**: Looks up PEGI ratings for each unrated game. You may be prompted to disambiguate titles.
-3. **F3 — Manage Children**: Create profiles for each child with a maximum PEGI age. From a child's profile you can review their filtered game list and push it to Steam.
+2. **F2 — Enrich Ratings**: Looks up age ratings for each unrated game via MobyGames. Multiple rating schemes are fetched (PEGI, BBFC, ESRB, etc.) and the best match per your preference order is stored. Press `m` on any game to search MobyGames interactively with an editable search term.
+3. **F3 — Manage Children**: Create profiles for each child with a maximum age rating. From a child's profile you can review their filtered game list, sync it as ratings update, and push it to Steam.
 
-Pushing a collection writes a filtered game list into Steam's cloud storage (`~/.local/share/Steam/userdata/{user_id}/config/cloudstorage/`). A backup of the existing file is created before any write.
+Pushing a collection writes a filtered game list into Steam's cloud storage. The Steam directory is auto-detected (Flatpak at `~/.var/app/com.valvesoftware.Steam/data/Steam/` is preferred over native `~/.local/share/Steam/`). A backup of the existing file is created before any write.
 
 ## Development
 
