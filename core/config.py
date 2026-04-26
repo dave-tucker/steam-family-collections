@@ -18,6 +18,7 @@ def enable_demo_mode() -> None:
     GAMES_FILE = _DEMO_DIR / "games.json"
     CHILDREN_DIR = _DEMO_DIR / "children"
 
+
 _EXAMPLE = """\
 [steam]
 api_key = "YOUR_STEAM_API_KEY"
@@ -32,7 +33,7 @@ _PLACEHOLDER_PREFIX = "YOUR_"
 
 _STEAM_DIR_CANDIDATES = [
     Path.home() / ".var/app/com.valvesoftware.Steam/data/Steam",  # Flatpak (preferred)
-    Path.home() / ".local/share/Steam",                            # native
+    Path.home() / ".local/share/Steam",  # native
 ]
 
 

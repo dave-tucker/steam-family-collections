@@ -9,15 +9,17 @@ def _write_cloud_file(path: Path, collections: dict) -> None:
     """Write a cloud file in the real [key, entry] list format."""
     entries = []
     for cid, col in collections.items():
-        entries.append([
-            f"user-collections.{cid}",
-            {
-                "key": f"user-collections.{cid}",
-                "timestamp": col.get("timestamp", 0),
-                "value": json.dumps(col),
-                "version": "1",
-            },
-        ])
+        entries.append(
+            [
+                f"user-collections.{cid}",
+                {
+                    "key": f"user-collections.{cid}",
+                    "timestamp": col.get("timestamp", 0),
+                    "value": json.dumps(col),
+                    "version": "1",
+                },
+            ]
+        )
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(entries))
 

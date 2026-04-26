@@ -68,7 +68,8 @@ _SEARCH_LIMIT = 20
 def _filter_pc(results: list[dict]) -> list[dict]:
     """Return only games that have at least one PC/Mac/Linux release."""
     return [
-        g for g in results
+        g
+        for g in results
         if any(p["platform_id"] in _PC_PLATFORM_IDS for p in g.get("platforms", []))
     ]
 

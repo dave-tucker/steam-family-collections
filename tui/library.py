@@ -126,9 +126,7 @@ class LibraryScreen(Screen):
                 key=appid,
             )
         if self._filter != "all" and not self._queue_active:
-            self.set_status(
-                f"Filter: {self._filter} — {len(visible)}/{len(games)} games shown"
-            )
+            self.set_status(f"Filter: {self._filter} — {len(visible)}/{len(games)} games shown")
 
         if selected_key is not None and selected_key in {str(k.value) for k in table.rows}:
             target = next(
@@ -213,9 +211,7 @@ class LibraryScreen(Screen):
         custom_term = self._custom_search_terms.pop(appid, None)
         display_title = custom_term or game["title"]
         try:
-            candidates = mobygames.search_games(
-                display_title, api_key, raw=custom_term is not None
-            )
+            candidates = mobygames.search_games(display_title, api_key, raw=custom_term is not None)
         except Exception as exc:
             self.app.call_from_thread(self.set_status, f'Search error for "{display_title}": {exc}')
             self.app.call_from_thread(self._advance_queue)
