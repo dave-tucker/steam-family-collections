@@ -161,6 +161,12 @@ class ChildCollectionScreen(Screen):
 
     # ------------------------------------------------------------------ push to steam
     def action_push_to_steam(self) -> None:
+        import core.config as _cfg
+
+        if _cfg.DEMO_MODE:
+            self.notify("Demo mode — push is disabled", severity="warning")
+            return
+
         def on_warning(confirmed: bool) -> None:
             if not confirmed:
                 return
@@ -194,7 +200,9 @@ class ChildCollectionScreen(Screen):
             return
 
         try:
-            collection.push_collection(user_id, self._child_name, child.get("library", []), steam_dir)
+            collection.push_collection(
+                user_id, self._child_name, child.get("library", []), steam_dir
+            )
             self.app.call_from_thread(
                 self.set_status,
                 f"Pushed {len(child.get('library', []))} games for {self._child_name}",

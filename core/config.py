@@ -7,6 +7,17 @@ DATA_DIR = Path.home() / ".local" / "share" / "steam-family-collections"
 GAMES_FILE = DATA_DIR / "games.json"
 CHILDREN_DIR = DATA_DIR / "children"
 
+DEMO_MODE: bool = False
+_DEMO_DIR = Path(__file__).parent.parent / "demo"
+
+
+def enable_demo_mode() -> None:
+    global DEMO_MODE, DATA_DIR, GAMES_FILE, CHILDREN_DIR
+    DEMO_MODE = True
+    DATA_DIR = _DEMO_DIR
+    GAMES_FILE = _DEMO_DIR / "games.json"
+    CHILDREN_DIR = _DEMO_DIR / "children"
+
 _EXAMPLE = """\
 [steam]
 api_key = "YOUR_STEAM_API_KEY"
@@ -49,6 +60,10 @@ def load_config() -> dict:
 
     with open(config_path, "rb") as f:
         config = tomllib.load(f)
+
+    if config.get("app", {}).get("demo", False):
+        enable_demo_mode()
+        return config
 
     for section, key in [
         ("steam", "api_key"),

@@ -2,12 +2,14 @@ import json
 import os
 import tempfile
 
-from core.config import CHILDREN_DIR, DATA_DIR, GAMES_FILE
+import core.config as _cfg
 
 
 def ensure_data_dir() -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    CHILDREN_DIR.mkdir(parents=True, exist_ok=True)
+    if _cfg.DEMO_MODE:
+        return
+    _cfg.DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _cfg.CHILDREN_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _atomic_write(path, data: dict) -> None:
@@ -41,9 +43,9 @@ def _migrate_game(game: dict) -> None:
 
 
 def load_games() -> dict:
-    if not GAMES_FILE.exists():
+    if not _cfg.GAMES_FILE.exists():
         return {}
-    with open(GAMES_FILE, encoding="utf-8") as f:
+    with open(_cfg.GAMES_FILE, encoding="utf-8") as f:
         games = json.load(f)
     for game in games.values():
         _migrate_game(game)
@@ -51,4 +53,6 @@ def load_games() -> dict:
 
 
 def save_games(games: dict) -> None:
-    _atomic_write(GAMES_FILE, games)
+    if _cfg.DEMO_MODE:
+        return
+    _atomic_write(_cfg.GAMES_FILE, games)

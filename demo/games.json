@@ -1,0 +1,227 @@
+{
+  "413150": {
+    "appid": 413150,
+    "title": "Stardew Valley",
+    "age_rating": 3,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "3"},
+    "pegi_flag": null,
+    "moby_id": 71007
+  },
+  "252950": {
+    "appid": 252950,
+    "title": "Rocket League",
+    "age_rating": 3,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "3"},
+    "pegi_flag": null,
+    "moby_id": 72207
+  },
+  "255710": {
+    "appid": 255710,
+    "title": "Cities: Skylines",
+    "age_rating": 3,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "3"},
+    "pegi_flag": null,
+    "moby_id": 73007
+  },
+  "728880": {
+    "appid": 728880,
+    "title": "Overcooked! 2",
+    "age_rating": 3,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "3"},
+    "pegi_flag": null,
+    "moby_id": 85007
+  },
+  "504230": {
+    "appid": 504230,
+    "title": "Celeste",
+    "age_rating": 3,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "3"},
+    "pegi_flag": null,
+    "moby_id": 83007
+  },
+  "105600": {
+    "appid": 105600,
+    "title": "Terraria",
+    "age_rating": 7,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "7"},
+    "pegi_flag": null,
+    "moby_id": 55007
+  },
+  "367520": {
+    "appid": 367520,
+    "title": "Hollow Knight",
+    "age_rating": 7,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "7"},
+    "pegi_flag": null,
+    "moby_id": 76807
+  },
+  "268910": {
+    "appid": 268910,
+    "title": "Cuphead",
+    "age_rating": 7,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "7"},
+    "pegi_flag": null,
+    "moby_id": 81007
+  },
+  "261570": {
+    "appid": 261570,
+    "title": "Ori and the Blind Forest",
+    "age_rating": 7,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "7"},
+    "pegi_flag": null,
+    "moby_id": 70507
+  },
+  "391540": {
+    "appid": 391540,
+    "title": "Undertale",
+    "age_rating": 7,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "7"},
+    "pegi_flag": null,
+    "moby_id": 71507
+  },
+  "253230": {
+    "appid": 253230,
+    "title": "A Hat in Time",
+    "age_rating": 7,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "7"},
+    "pegi_flag": null,
+    "moby_id": 82007
+  },
+  "1672970": {
+    "appid": 1672970,
+    "title": "Minecraft Dungeons",
+    "age_rating": 7,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "7"},
+    "pegi_flag": null,
+    "moby_id": 91007
+  },
+  "620": {
+    "appid": 620,
+    "title": "Portal 2",
+    "age_rating": 12,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "12"},
+    "pegi_flag": null,
+    "moby_id": 51007
+  },
+  "440": {
+    "appid": 440,
+    "title": "Team Fortress 2",
+    "age_rating": 12,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "12"},
+    "pegi_flag": null,
+    "moby_id": 36007
+  },
+  "289070": {
+    "appid": 289070,
+    "title": "Sid Meier's Civilization VI",
+    "age_rating": 12,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "12"},
+    "pegi_flag": null,
+    "moby_id": 77007
+  },
+  "646570": {
+    "appid": 646570,
+    "title": "Slay the Spire",
+    "age_rating": 12,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "12"},
+    "pegi_flag": null,
+    "moby_id": 84007
+  },
+  "1145360": {
+    "appid": 1145360,
+    "title": "Hades",
+    "age_rating": 12,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "12"},
+    "pegi_flag": null,
+    "moby_id": 89007
+  },
+  "1426210": {
+    "appid": 1426210,
+    "title": "It Takes Two",
+    "age_rating": 12,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "12"},
+    "pegi_flag": null,
+    "moby_id": 92007
+  },
+  "418530": {
+    "appid": 418530,
+    "title": "Spelunky 2",
+    "age_rating": 12,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "12"},
+    "pegi_flag": null,
+    "moby_id": 88007
+  },
+  "945360": {
+    "appid": 945360,
+    "title": "Among Us",
+    "age_rating": 12,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "12"},
+    "pegi_flag": null,
+    "moby_id": 90007
+  },
+  "4000": {
+    "appid": 4000,
+    "title": "Garry's Mod",
+    "age_rating": 12,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "12"},
+    "pegi_flag": null,
+    "moby_id": 28007
+  },
+  "617830": {
+    "appid": 617830,
+    "title": "SUPERHOT",
+    "age_rating": 16,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "16"},
+    "pegi_flag": null,
+    "moby_id": 74007
+  },
+  "632470": {
+    "appid": 632470,
+    "title": "Disco Elysium",
+    "age_rating": 16,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "16"},
+    "pegi_flag": null,
+    "moby_id": 87007
+  },
+  "379720": {
+    "appid": 379720,
+    "title": "DOOM",
+    "age_rating": 18,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "18"},
+    "pegi_flag": null,
+    "moby_id": 75007
+  },
+  "550": {
+    "appid": 550,
+    "title": "Left 4 Dead 2",
+    "age_rating": 18,
+    "rating_scheme": "pegi",
+    "ratings": {"pegi": "18"},
+    "pegi_flag": null,
+    "moby_id": 44007
+  }
+}

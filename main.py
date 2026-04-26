@@ -28,18 +28,31 @@ class SteamFamilyApp(App):
         self.config = config
 
     def on_mount(self) -> None:
+        import core.config as _cfg
         from tui.library import LibraryScreen
 
+        if _cfg.DEMO_MODE:
+            self.title = "Steam Family Collections [DEMO MODE]"
         self.push_screen(LibraryScreen())
 
     # ------------------------------------------------------------------ F1
     def action_fetch_library(self) -> None:
+        import core.config as _cfg
+
+        if _cfg.DEMO_MODE:
+            self.notify("Demo mode — fetch is disabled", severity="warning")
+            return
         screen = self._get_or_push_library()
         if screen:
             screen.start_fetch_library()
 
     # ------------------------------------------------------------------ F2
     def action_enrich_ratings(self) -> None:
+        import core.config as _cfg
+
+        if _cfg.DEMO_MODE:
+            self.notify("Demo mode — enrich is disabled", severity="warning")
+            return
         screen = self._get_or_push_library()
         if screen:
             screen.start_enrich_all()

@@ -1,0 +1,43 @@
+site_name: Steam Family Collections
+site_description: Create age-appropriate Steam game collections for your children
+site_url: https://dave-tucker.github.io/steam-family-collections/
+repo_url: https://github.com/dave-tucker/steam-family-collections
+repo_name: dave-tucker/steam-family-collections
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue grey
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Configuration: configuration.md
+  - Usage: usage.md
+  - Demo Mode: demo.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - attr_list

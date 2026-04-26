@@ -1,11 +1,11 @@
 import json
 
-from core.config import CHILDREN_DIR
+import core.config as _cfg
 from core.database import _atomic_write
 
 
 def load_child(name: str) -> dict | None:
-    path = CHILDREN_DIR / f"{name}.json"
+    path = _cfg.CHILDREN_DIR / f"{name}.json"
     if not path.exists():
         return None
     with open(path, encoding="utf-8") as f:
@@ -13,20 +13,24 @@ def load_child(name: str) -> dict | None:
 
 
 def save_child(child: dict) -> None:
-    CHILDREN_DIR.mkdir(parents=True, exist_ok=True)
-    _atomic_write(CHILDREN_DIR / f"{child['name']}.json", child)
+    if _cfg.DEMO_MODE:
+        return
+    _cfg.CHILDREN_DIR.mkdir(parents=True, exist_ok=True)
+    _atomic_write(_cfg.CHILDREN_DIR / f"{child['name']}.json", child)
 
 
 def delete_child(name: str) -> None:
-    path = CHILDREN_DIR / f"{name}.json"
+    if _cfg.DEMO_MODE:
+        return
+    path = _cfg.CHILDREN_DIR / f"{name}.json"
     if path.exists():
         path.unlink()
 
 
 def list_children() -> list[dict]:
-    CHILDREN_DIR.mkdir(parents=True, exist_ok=True)
+    _cfg.CHILDREN_DIR.mkdir(parents=True, exist_ok=True)
     result = []
-    for path in sorted(CHILDREN_DIR.glob("*.json")):
+    for path in sorted(_cfg.CHILDREN_DIR.glob("*.json")):
         with open(path, encoding="utf-8") as f:
             result.append(json.load(f))
     return result

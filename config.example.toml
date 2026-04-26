@@ -1,3 +1,6 @@
+# [app]
+# demo = true   # Enable demo mode: loads bundled sample data, no API keys required
+
 [steam]
 api_key = "YOUR_STEAM_API_KEY"
 steam_id = "YOUR_STEAM_ID_64"

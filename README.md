@@ -1,5 +1,7 @@
 # Steam Family Collections
 
+![Library screen](docs/assets/screenshots/library.svg)
+
 I have a large Steam library, and I want to share it with my Kids.
 Steam offers 2 options:
 
