@@ -1,5 +1,11 @@
 # Steam Family Collections
 
+[![CI](https://github.com/dave-tucker/steam-family-collections/actions/workflows/ci.yml/badge.svg)](https://github.com/dave-tucker/steam-family-collections/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-online-blue)](https://dave-tucker.github.io/steam-family-collections/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+
+[Documentation](https://dave-tucker.github.io/steam-family-collections/)
+
 ![Library screen](docs/assets/screenshots/library.svg)
 
 I have a large Steam library, and I want to share it with my Kids.

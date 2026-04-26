@@ -17,7 +17,7 @@ version = "0.1.0"
 description = "TUI app to manage age-appropriate Steam game collections for children"
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 dependencies = [
     "textual>=0.70.0",
     "requests>=2.28.0",
