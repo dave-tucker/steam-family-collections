@@ -93,6 +93,15 @@ When ready, press `P` to push the collection to Steam.
 
 A backup of the existing collection file is created automatically before each push.
 
+### Approving games in Steam
+
+After pushing, you need to approve the games in Steam for your child:
+
+1. Open Steam and go to **Library → Collections**. Select the collection you just pushed.
+2. Click the first game in the collection sidebar on the left.
+3. Scroll to the bottom of the collection in the sidebar, then **Shift+click** the last game to select all.
+4. Right-click the selection and choose **Family → Approve for &lt;child&gt;**.
+
 ---
 
 ## Tips

@@ -109,6 +109,8 @@ To find your `steam_id`, visit your Steam profile page — the 64-bit ID appears
 
 Pushing a collection writes a filtered game list into Steam's cloud storage. The Steam directory is auto-detected (Flatpak at `~/.var/app/com.valvesoftware.Steam/data/Steam/` is preferred over native `~/.local/share/Steam/`). A backup of the existing file is created before any write.
 
+After pushing, approve the games in Steam: go to **Library → Collections**, open the collection, click the first game in the sidebar, scroll to the bottom and **Shift+click** the last game, then right-click and choose **Family → Approve for \<child\>**.
+
 ## Development
 
 ```bash
